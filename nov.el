@@ -335,7 +335,10 @@ Each alist item consists of the identifier and full path.")
 (defun nov-url-filename-and-target (url)
   "Return a list of URL's filename and target."
   (setq url (url-generic-parse-url url))
-  (list (url-filename url) (url-target url)))
+  ;; HACK: in case a directory is stripped, filenames may end up less
+  ;; than unique
+  (list (file-name-nondirectory (url-filename url))
+        (url-target url)))
 
 (defun nov-insert-image (path)
   "Insert an image for PATH at point.

@@ -335,10 +335,7 @@ Each alist item consists of the identifier and full path.")
 (defun nov-url-filename-and-target (url)
   "Return a list of URL's filename and target."
   (setq url (url-generic-parse-url url))
-  ;; HACK: in case a directory is stripped, filenames may end up less
-  ;; than unique
-  (list (file-name-nondirectory (url-filename url))
-        (url-target url)))
+  (list (url-filename url) (url-target url)))
 
 (defun nov-insert-image (path)
   "Insert an image for PATH at point.
@@ -495,8 +492,11 @@ the HTML is rendered with `shr-render-region'."
 
 (defun nov-visit-relative-file (filename target)
   "Visit the document as specified by FILENAME and TARGET."
-  (let ((index (nov-find-document (lambda (doc)
-                                    (string-suffix-p filename (cdr doc))))))
+  (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
+         (directory (file-name-directory current-path))
+         (path (file-truename (nov-make-path directory filename)))
+         (index (nov-find-document (lambda (doc)
+                                     (string-suffix-p path (cdr doc))))))
     (when (not index)
       (error "Couldn't locate document"))
     (setq nov-documents-index index)

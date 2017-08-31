@@ -312,6 +312,8 @@ Each alist item consists of the identifier and full path.")
     (define-key map (kbd "M-TAB") 'shr-previous-link)
     (define-key map (kbd "<backtab>") 'shr-previous-link)
     (define-key map (kbd "SPC") 'nov-scroll-up)
+    (define-key map (kbd "S-SPC") 'nov-scroll-down)
+    (define-key map (kbd "DEL") 'nov-scroll-down)
     (define-key map (kbd "<home>") 'beginning-of-buffer)
     (define-key map (kbd "<end>") 'end-of-buffer)
     map))
@@ -495,6 +497,16 @@ the HTML is rendered with `shr-render-region'."
   (if (>= (window-end) (point-max))
       (nov-next-chapter)
     (scroll-up arg)))
+
+(defun nov-scroll-down (arg)
+  "Scroll with `scroll-down' or visit previous chapter if at top."
+  (interactive "P")
+  (if (and (<= (window-start) (point-min))
+           (> nov-documents-index 0))
+      (progn
+        (nov-previous-chapter)
+        (goto-char (point-max)))
+    (scroll-down arg)))
 
 (defun nov-visit-relative-file (filename target)
   "Visit the document as specified by FILENAME and TARGET."

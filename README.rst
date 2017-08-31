@@ -52,6 +52,12 @@ Open the EPUB file with ``C-x C-f ~/novels/novel.epub``, scroll with
 ``SPC`` and switch chapters with ``n`` and ``p``.  More keybinds can
 be looked up with ``F1 m``.
 
+Contributing
+------------
+
+See `CONTRIBUTING.rst
+<https://github.com/wasamasa/nov.el/blob/master/CONTRIBUTING.rst>`_.
+
 Alternatives
 ------------
 

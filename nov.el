@@ -174,14 +174,15 @@ Required keys are 'identifier and everything in
                                      (car (esxml-node-children node))))
                              (esxml-query-all "package>metadata>*" content)))
          (required (mapcar (lambda (tag)
-                             (let ((candidate (assq tag candidates)))
-                               (when (or (not candidate) (not (cdr candidate)))
-                                 (error "Required metadatum %s not found" tag))
-                               candidate))
+                             (let ((candidate (cdr (assq tag candidates))))
+                               (when (not candidate)
+                                 ;; NOTE: this should ideally be a
+                                 ;; warning, but `warn' is too obtrusive
+                                 (message "Required metadatum %s not found" tag))
+                               (cons tag candidate)))
                            nov-required-metadata-tags))
-         (optional (->> nov-optional-metadata-tags
-                        (mapcar (lambda (tag) (assq tag candidates)))
-                        (--remove (or (not it) (not (cdr it)))))))
+         (optional (mapcar (lambda (tag) (cons tag (cdr (assq tag candidates))))
+                           nov-optional-metadata-tags)))
     (append `((identifier . ,identifier)) required optional)))
 
 (defun nov-content-manifest (directory content)
@@ -373,6 +374,9 @@ chapter title."
         (chapter-title (car (esxml-node-children dom))))
     (when (not chapter-title)
       (setq chapter-title '(:propertize "No title" face italic)))
+    ;; this shouldn't happen for properly authored EPUBs
+    (when (not title)
+      (setq title '(:propertize "No title" face italic)))
     (setq header-line-format (list title ": " chapter-title))))
 
 (defvar nov-rendering-functions
@@ -460,11 +464,13 @@ the HTML is rendered with `shr-render-region'."
         (dolist (item metadata)
           (-let [(key . value) item]
             (insert (format "%s: " (capitalize (symbol-name key))))
-            (if (eq key 'description)
-                (let ((beg (point)))
-                  (insert value)
-                  (shr-render-region beg (point)))
-              (insert value))
+            (if value
+                (if (eq key 'description)
+                    (let ((beg (point)))
+                      (insert value)
+                      (shr-render-region beg (point)))
+                  (insert value))
+              (insert (propertize "None" 'face 'italic)))
             (insert "\n")))
         (goto-char (point-min))))
     (display-buffer buffer)))

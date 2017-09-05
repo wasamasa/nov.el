@@ -54,7 +54,7 @@
   :group 'multimedia)
 
 (defcustom nov-unzip-program (executable-find "unzip")
-  "Path to `unzip` executable"
+  "Path to `unzip` executable."
   :type '(file :must-match t)
   :group 'nov)
 

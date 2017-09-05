@@ -58,6 +58,35 @@
   :type '(file :must-match t)
   :group 'nov)
 
+(defvar nov-temp-dir nil
+  "Temporary directory containing the buffer's EPUB files.")
+(make-variable-buffer-local 'nov-temp-dir)
+
+(defvar nov-content-file nil
+  "Path of the EPUB buffer's .opf file.")
+(make-variable-buffer-local 'nov-content-file)
+
+(defvar nov-epub-version nil
+  "Version string of the EPUB buffer.")
+(make-variable-buffer-local 'nov-epub-version)
+
+(defvar nov-metadata nil
+  "Metadata of the EPUB buffer.")
+(make-variable-buffer-local 'nov-metadata)
+
+(defvar nov-documents nil
+  "Alist for the EPUB buffer's documents.
+Each alist item consists of the identifier and full path.")
+(make-variable-buffer-local 'nov-documents)
+
+(defvar nov-documents-index 0
+  "Index of the currently rendered document in the EPUB buffer.")
+(make-variable-buffer-local 'nov-documents-index)
+
+(defvar nov-toc-id nil
+  "TOC identifier of the EPUB buffer.")
+(make-variable-buffer-local 'nov-toc-id)
+
 (defun nov-make-path (directory file)
   "Create a path from DIRECTORY and FILE."
   (concat (file-name-as-directory directory) file))
@@ -269,35 +298,6 @@ Each alist item consists of the identifier and full path."
 
 
 ;;; UI
-
-(defvar nov-temp-dir nil
-  "Temporary directory containing the buffer's EPUB files.")
-(make-variable-buffer-local 'nov-temp-dir)
-
-(defvar nov-content-file nil
-  "Path of the EPUB buffer's .opf file.")
-(make-variable-buffer-local 'nov-content-file)
-
-(defvar nov-epub-version nil
-  "Version string of the EPUB buffer.")
-(make-variable-buffer-local 'nov-epub-version)
-
-(defvar nov-metadata nil
-  "Metadata of the EPUB buffer.")
-(make-variable-buffer-local 'nov-metadata)
-
-(defvar nov-documents nil
-  "Alist for the EPUB buffer's documents.
-Each alist item consists of the identifier and full path.")
-(make-variable-buffer-local 'nov-documents)
-
-(defvar nov-documents-index 0
-  "Index of the currently rendered document in the EPUB buffer.")
-(make-variable-buffer-local 'nov-documents-index)
-
-(defvar nov-toc-id nil
-  "TOC identifier of the EPUB buffer.")
-(make-variable-buffer-local 'nov-toc-id)
 
 (defvar nov-mode-map
   (let ((map (make-sparse-keymap)))

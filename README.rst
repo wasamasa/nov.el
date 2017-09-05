@@ -28,8 +28,8 @@ Installation
 ------------
 
 You'll have to manually install `esxml
-<https://github.com/tali713/esxml>`_ with the ``css-select`` branch
-checked out first, then this package.  Sorry about that!
+<https://github.com/tali713/esxml>`_ for the ``esxml-query.el`` file,
+then this package.  Sorry about that!
 
 Setup
 -----

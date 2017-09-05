@@ -3,6 +3,9 @@
 ;; Copyright (C) 2017 Vasilij Schneidermann <mail@vasilij.de>
 
 ;; Author: Vasilij Schneidermann <mail@vasilij.de>
+;; URL: https://github.com/wasamasa/nov.el
+;; Version: 0.0.1
+;; Package-Requires: ((dash "2.12.0") (esxml "0.3.3") (emacs "24.4"))
 ;; Keywords: hypermedia, multimedia, epub
 
 ;; This file is NOT part of GNU Emacs.

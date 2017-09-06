@@ -27,9 +27,9 @@ Screenshot
 Installation
 ------------
 
-You'll have to manually install `esxml
-<https://github.com/tali713/esxml>`_ for the ``esxml-query.el`` file,
-then this package.  Sorry about that!
+Set up the `MELPA <https://melpa.org/>`_ or `MELPA Stable
+<https://stable.melpa.org/>`_ repository if you haven't already and
+install with ``M-x package-install RET nov RET``.
 
 Setup
 -----

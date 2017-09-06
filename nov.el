@@ -543,6 +543,7 @@ Internal URLs are visited with `nov-visit-relative-file'."
         (browse-url url)
       (apply 'nov-visit-relative-file (nov-url-filename-and-target url)))))
 
+;;;###autoload
 (define-derived-mode nov-mode special-mode "EPUB"
   "Major mode for reading EPUB documents"
   (add-hook 'kill-buffer-hook 'nov-clean-up nil t)

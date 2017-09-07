@@ -37,7 +37,8 @@ Setup
 Make sure you have an ``unzip`` executable on ``PATH``, otherwise the
 extraction of EPUB files will fail.  If you for some reason have
 ``unzip`` in a non-standard location, customize ``nov-unzip-program``
-to its path.
+to its path.  You'll also need an Emacs compiled with ``libxml2``
+support, otherwise rendering will fail.
 
 Put the following in your init file:
 

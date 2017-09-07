@@ -478,7 +478,7 @@ the HTML is rendered with `shr-render-region'."
               (insert (propertize "None" 'face 'italic)))
             (insert "\n")))
         (goto-char (point-min))))
-    (display-buffer buffer)))
+    (pop-to-buffer buffer)))
 
 (defun nov-next-chapter ()
   "Go to the next chapter and render its document."

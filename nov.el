@@ -53,6 +53,16 @@
   "EPUB reader mode"
   :group 'multimedia)
 
+(defvar-local nov-history nil
+  "Stack of chapters user has visited.
+
+Each element of the stack is a list (DOCUMENT-INDEX BUFFERPOS).")
+
+(defvar-local nov-history-forward nil
+  "Stack of chapters user has visited with `nov-history-back'.
+
+Each element of the stack is a list (DOCUMENT-INDEX BUFFERPOS).")
+
 (defcustom nov-unzip-program (executable-find "unzip")
   "Path to `unzip` executable."
   :type '(file :must-match t)
@@ -302,6 +312,8 @@ Each alist item consists of the identifier and full path."
 (defvar nov-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "g") 'nov-render-document)
+    (define-key map (kbd "l") #'nov-history-back)
+    (define-key map (kbd "r") #'nov-history-forward)
     (define-key map (kbd "v") 'nov-view-source)
     (define-key map (kbd "V") 'nov-view-content-source)
     (define-key map (kbd "m") 'nov-display-metadata)
@@ -391,13 +403,19 @@ chapter title."
     (title . nov-render-title))
   "Alist of rendering functions used with `shr-render-region'.")
 
-(defun nov-render-document ()
-  "Render the document referenced by `nov-documents-index'.
+(defun nov-render-document (&optional index)
+  "Render the document at INDEX.
+
+Optional argument INDEX is `nov-documents-index' by default.
+
 If the document path refers to an image (as determined by
 `image-type-file-name-regexps'), an image is inserted, otherwise
 the HTML is rendered with `shr-render-region'."
   (interactive)
-  (let* ((document (aref nov-documents nov-documents-index))
+  (setq index (or index nov-documents-index))
+  (let* ((current-index nov-documents-index)
+         (current-point (point))
+         (document (aref nov-documents index))
          (id (car document))
          (path (cdr document))
          ;; HACK: this should be looked up in the manifest
@@ -422,7 +440,18 @@ the HTML is rendered with `shr-render-region'."
             (shr-map nov-mode-map)
             (shr-external-rendering-functions nov-rendering-functions))
         (shr-render-region (point-min) (point-max))))
-    (goto-char (point-min))))
+    (goto-char (point-min))
+
+    ;; Update `nov-documents-index' to that of rendered document
+    (setq nov-documents-index index)
+
+    ;; Add previous index to history if different
+    (unless (= current-index index)
+      (push (list current-index current-point) nov-history))
+
+    ;; Wipe out `nov-history-forward'; moves that need to keep forward history
+    ;; must do so themselves
+    (setq nov-history-forward nil)))
 
 (defun nov-find-document (predicate)
   "Return first item in `nov-documents' PREDICATE is true for."
@@ -442,8 +471,7 @@ the HTML is rendered with `shr-render-region'."
   (let ((index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id)))))
     (when (not index)
       (error "Couldn't locate TOC"))
-    (setq nov-documents-index index)
-    (nov-render-document)))
+    (nov-render-document index)))
 
 (defun nov-view-source ()
   "View the source of the current document in a new buffer."
@@ -484,15 +512,38 @@ the HTML is rendered with `shr-render-region'."
   "Go to the next chapter and render its document."
   (interactive)
   (when (< nov-documents-index (1- (length nov-documents)))
-    (setq nov-documents-index (1+ nov-documents-index))
-    (nov-render-document)))
+    (nov-render-document (1+ nov-documents-index))))
 
 (defun nov-previous-chapter ()
   "Go to the previous chapter and render its document."
   (interactive)
   (when (> nov-documents-index 0)
-    (setq nov-documents-index (1- nov-documents-index))
-    (nov-render-document)))
+    (nov-render-document (1- nov-documents-index))))
+
+(defun nov-history-back ()
+  "Go back in the history to the last chapter visited."
+  (interactive)
+  (or nov-history
+      (user-error "This is the first chapter you looked at"))
+  (let ((prev-index (caar nov-history))
+        (prev-point (cadar nov-history))
+        (history-forward (cons (list nov-documents-index (point)) nov-history-forward)))
+    (nov-render-document prev-index)
+    (goto-char prev-point)
+    (dotimes (_ 2) (pop nov-history))
+    (setq nov-history-forward history-forward)))
+
+(defun nov-history-forward ()
+  "Go forward in the history of visited chapters."
+  (interactive)
+  (or nov-history-forward
+      (user-error "This is the last chapter you looked at"))
+  (let ((next-index (caar nov-history-forward))
+        (next-point (cadar nov-history-forward))
+        (history-forward (cdr nov-history-forward)))
+    (nov-render-document next-index)
+    (goto-char next-point)
+    (setq nov-history-forward history-forward)))
 
 (defun nov-scroll-up (arg)
   "Scroll with `scroll-up' or visit next chapter if at bottom."
@@ -520,9 +571,8 @@ the HTML is rendered with `shr-render-region'."
                                      (string-suffix-p path (cdr doc))))))
     (when (not index)
       (error "Couldn't locate document"))
-    (setq nov-documents-index index)
     (let ((shr-target-id target))
-      (nov-render-document))
+      (nov-render-document index))
     (when target
       (let ((pos (next-single-property-change (point-min) 'shr-target-id)))
         (when (not pos)
@@ -574,11 +624,10 @@ Internal URLs are visited with `nov-visit-relative-file'."
     (setq nov-epub-version (nov-content-version content))
     (setq nov-metadata (nov-content-metadata content))
     (setq nov-documents (->> (nov-content-files work-dir content)
-                             (apply 'vector)))
-    (setq nov-documents-index 0))
+                             (apply 'vector))))
   (setq buffer-undo-list t)
   (set-visited-file-name nil t) ; disable autosaves and save questions
-  (nov-render-document))
+  (nov-render-document 0))
 
 (provide 'nov)
 ;;; nov.el ends here

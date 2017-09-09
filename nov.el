@@ -40,6 +40,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'dash)
 (require 'esxml)
 (require 'esxml-query)
@@ -360,13 +361,19 @@ This function honors `shr-max-image-proportion' if possible."
                                                    (nth 1 edges)))))))
     (insert-image (create-image path nil nil :ascent 100))))
 
+(defvar nov-original-shr-tag-img-function
+  (symbol-function 'shr-tag-img))
+
 (defun nov-render-img (dom)
   "Custom <img> rendering function for DOM.
 Uses `shr-tag-img' for external paths and `nov-insert-image' for
 internal ones."
   (let ((url (cdr (assq 'src (cadr dom)))))
     (if (nov-external-url-p url)
-        (funcall 'shr-tag-img dom)
+        ;; HACK: avoid hanging in an infinite loop when using
+        ;; `cl-letf' to override `shr-tag-img' with a function that
+        ;; might call `shr-tag-img' again
+        (funcall nov-original-shr-tag-img-function dom)
       (setq url (expand-file-name url))
       (nov-insert-image url))))
 
@@ -421,7 +428,10 @@ the HTML is rendered with `shr-render-region'."
             (shr-map nov-mode-map)
             (shr-external-rendering-functions nov-rendering-functions)
             (shr-use-fonts nov-variable-pitch))
-        (shr-render-region (point-min) (point-max))))
+        ;; HACK: `shr-external-rendering-functions' doesn't cover
+        ;; every usage of `shr-tag-img'
+        (cl-letf (((symbol-function 'shr-tag-img) 'nov-render-img))
+          (shr-render-region (point-min) (point-max)))))
     (goto-char (point-min))))
 
 (defun nov-find-document (predicate)

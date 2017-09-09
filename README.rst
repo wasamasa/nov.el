@@ -70,6 +70,27 @@ To completely disable the variable pitch font, customize
 ``nov-variable-pitch`` to ``nil``.  Text will be displayed with the
 default face instead which should be using a monospace font.
 
+Text width
+..........
+
+By default text is filled by the window width.  You can customize
+``nov-text-width`` to a number of columns to change that:
+
+.. code:: elisp
+
+    (setq nov-text-width 80)
+
+It's also possible to set it to a huge number to inhibit text filling,
+this can be used in combination with ``visual-line-mode`` and packages
+such as ``visual-fill-column`` to implement more flexible filling:
+
+.. code:: elisp
+
+    (setq nov-text-width most-positive-fixnum)
+    (setq visual-fill-column-center-text t)
+    (add-hook 'nov-mode-hook 'visual-line-mode)
+    (add-hook 'nov-mode-hook 'visual-fill-column-mode)
+
 Usage
 -----
 

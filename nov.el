@@ -65,6 +65,15 @@ Otherwise the default face is used."
   :type 'boolean
   :group 'nov)
 
+(defcustom nov-text-width nil
+  "Width filled text shall occupy.
+An integer is interpreted as the number of columns.  If nil, use
+the full window's width.  Note that this variable only has an
+effect in Emacs 25.1 or greater."
+  :type '(choice (integer :tag "Fixed width in characters")
+                 (const   :tag "Use the width of the window" nil))
+  :group 'nov)
+
 (defvar-local nov-temp-dir nil
   "Temporary directory containing the buffer's EPUB files.")
 
@@ -427,7 +436,8 @@ the HTML is rendered with `shr-render-region'."
       (let (;; HACK: make buttons use our own commands
             (shr-map nov-mode-map)
             (shr-external-rendering-functions nov-rendering-functions)
-            (shr-use-fonts nov-variable-pitch))
+            (shr-use-fonts nov-variable-pitch)
+            (shr-width nov-text-width))
         ;; HACK: `shr-external-rendering-functions' doesn't cover
         ;; every usage of `shr-tag-img'
         (cl-letf (((symbol-function 'shr-tag-img) 'nov-render-img))

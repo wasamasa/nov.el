@@ -46,6 +46,30 @@ Put the following in your init file:
 
     (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
+Customization
+-------------
+
+While the defaults make for an acceptable reading experience, it can
+be improved with any of the following changes:
+
+Default font
+............
+
+To change the default font, use ``M-x customize-face RET
+variable-pitch``, pick a different family, save and apply.  If you
+dislike globally customizing that face, add the following to your init
+file:
+
+.. code:: elisp
+
+    (defun my-nov-font-setup ()
+      (face-remap-add-relative 'variable-pitch :family "Liberation Serif"))
+    (add-hook 'nov-mode-hook 'my-nov-font-setup)
+
+To completely disable the variable pitch font, customize
+``nov-variable-pitch`` to ``nil``.  Text will be displayed with the
+default face instead which should be using a monospace font.
+
 Usage
 -----
 

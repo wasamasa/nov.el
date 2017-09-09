@@ -58,6 +58,12 @@
   :type '(file :must-match t)
   :group 'nov)
 
+(defcustom nov-variable-pitch t
+  "Non-nil if a variable pitch face should be used.
+Otherwise the default face is used."
+  :type 'boolean
+  :group 'nov)
+
 (defvar-local nov-temp-dir nil
   "Temporary directory containing the buffer's EPUB files.")
 
@@ -413,7 +419,8 @@ the HTML is rendered with `shr-render-region'."
     (when (not imagep)
       (let (;; HACK: make buttons use our own commands
             (shr-map nov-mode-map)
-            (shr-external-rendering-functions nov-rendering-functions))
+            (shr-external-rendering-functions nov-rendering-functions)
+            (shr-use-fonts nov-variable-pitch))
         (shr-render-region (point-min) (point-max))))
     (goto-char (point-min))))
 

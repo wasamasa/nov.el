@@ -44,7 +44,7 @@ Put the following in your init file:
 
 .. code:: elisp
 
-    (push '("\\.epub\\'" . nov-mode) auto-mode-alist)
+    (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
 Usage
 -----

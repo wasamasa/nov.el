@@ -509,8 +509,8 @@ the HTML is rendered with `shr-render-region'."
   (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
          (directory (file-name-directory current-path))
          (path (file-truename (nov-make-path directory filename)))
-         (index (nov-find-document (lambda (doc)
-                                     (string-suffix-p path (cdr doc))))))
+         (index (nov-find-document
+                 (lambda (doc) (equal path (file-truename (cdr doc)))))))
     (when (not index)
       (error "Couldn't locate document"))
     (setq nov-documents-index index)

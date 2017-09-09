@@ -298,8 +298,8 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "v") 'nov-view-source)
     (define-key map (kbd "V") 'nov-view-content-source)
     (define-key map (kbd "m") 'nov-display-metadata)
-    (define-key map (kbd "n") 'nov-next-chapter)
-    (define-key map (kbd "p") 'nov-previous-chapter)
+    (define-key map (kbd "n") 'nov-next-document)
+    (define-key map (kbd "p") 'nov-previous-document)
     (define-key map (kbd "t") 'nov-goto-toc)
     (define-key map (kbd "RET") 'nov-browse-url)
     (define-key map (kbd "<follow-link>") 'mouse-face)
@@ -473,15 +473,15 @@ the HTML is rendered with `shr-render-region'."
         (goto-char (point-min))))
     (pop-to-buffer buffer)))
 
-(defun nov-next-chapter ()
-  "Go to the next chapter and render its document."
+(defun nov-next-document ()
+  "Go to the next document and render it."
   (interactive)
   (when (< nov-documents-index (1- (length nov-documents)))
     (setq nov-documents-index (1+ nov-documents-index))
     (nov-render-document)))
 
-(defun nov-previous-chapter ()
-  "Go to the previous chapter and render its document."
+(defun nov-previous-document ()
+  "Go to the previous document and render it."
   (interactive)
   (when (> nov-documents-index 0)
     (setq nov-documents-index (1- nov-documents-index))
@@ -491,7 +491,7 @@ the HTML is rendered with `shr-render-region'."
   "Scroll with `scroll-up' or visit next chapter if at bottom."
   (interactive "P")
   (if (>= (window-end) (point-max))
-      (nov-next-chapter)
+      (nov-next-document)
     (scroll-up arg)))
 
 (defun nov-scroll-down (arg)
@@ -500,7 +500,7 @@ the HTML is rendered with `shr-render-region'."
   (if (and (<= (window-start) (point-min))
            (> nov-documents-index 0))
       (progn
-        (nov-previous-chapter)
+        (nov-previous-document)
         (goto-char (point-max)))
     (scroll-down arg)))
 

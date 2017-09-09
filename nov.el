@@ -146,6 +146,10 @@ Unnecessary nesting is removed with `nov-unnest-directory'."
 
 (defun nov-slurp (filename)
   "Return the contents of FILENAME."
+  ;; HACK: unzip preserves file permissions, no matter how silly they
+  ;; are, so ensure files are readable
+  (when (not (file-readable-p filename))
+    (set-file-modes filename #o444))
   (with-temp-buffer
     (insert-file-contents filename)
     (buffer-string)))

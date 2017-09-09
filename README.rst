@@ -91,6 +91,16 @@ such as ``visual-fill-column`` to implement more flexible filling:
     (add-hook 'nov-mode-hook 'visual-line-mode)
     (add-hook 'nov-mode-hook 'visual-fill-column-mode)
 
+Rendering
+.........
+
+In case you're not happy with the rendering at all, you can either use
+``nov-pre-html-render-hook`` and ``nov-post-html-render-hook`` to
+adjust the HTML before and after rendering or use your own rendering
+function by customizing ``nov-render-html-function`` to one that
+replaces HTML in a buffer with something nicer than the default
+output.
+
 Usage
 -----
 

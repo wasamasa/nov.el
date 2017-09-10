@@ -42,10 +42,12 @@
 
 (require 'cl-lib)
 (require 'dash)
-(require 'esxml)
 (require 'esxml-query)
 (require 'shr)
 (require 'url-parse)
+
+(when (not (fboundp 'libxml-parse-xml-region))
+  (message "Your Emacs wasn't compiled with libxml support"))
 
 
 ;;; EPUB preparation
@@ -144,15 +146,18 @@ Unnecessary nesting is removed with `nov-unnest-directory'."
   "Like `ignore-errors', but for file errors."
   `(condition-case nil (progn ,@body) (file-error nil)))
 
-(defun nov-slurp (filename)
-  "Return the contents of FILENAME."
+(defun nov-slurp (filename &optional parse-xml-p)
+  "Return the contents of FILENAME.
+If PARSE-XML-P is t, return the contents as parsed by libxml."
   ;; HACK: unzip preserves file permissions, no matter how silly they
   ;; are, so ensure files are readable
   (when (not (file-readable-p filename))
     (set-file-modes filename #o444))
   (with-temp-buffer
     (insert-file-contents filename)
-    (buffer-string)))
+    (if parse-xml-p
+        (libxml-parse-xml-region (point-min) (point-max))
+      (buffer-string))))
 
 (defun nov-mimetype-valid-p (directory)
   "Return t if DIRECTORY contains a valid EPUB mimetype file."
@@ -175,7 +180,7 @@ Unnecessary nesting is removed with `nov-unnest-directory'."
   "Return t if DIRECTORY holds a valid EPUB container."
   (let ((filename (nov-container-filename directory)))
     (when (and filename (file-exists-p filename))
-      (let* ((content (xml-to-esxml (nov-slurp filename)))
+      (let* ((content (nov-slurp filename t))
              (content-file (nov-container-content-filename content)))
         (when (and content content-file)
           (file-exists-p (nov-make-path directory content-file)))))))
@@ -319,7 +324,7 @@ Each alist item consists of the identifier and full path."
 
 (defun nov-ncx-to-html (path)
   "Convert NCX document at PATH to HTML."
-  (let ((root (esxml-query "navMap" (xml-to-esxml (nov-slurp path)))))
+  (let ((root (esxml-query "navMap" (nov-slurp path t))))
     (with-temp-buffer
       (nov--walk-ncx-node root 0)
       (buffer-string))))
@@ -607,14 +612,11 @@ Internal URLs are visited with `nov-visit-relative-file'."
   (when (not (nov-epub-valid-p nov-temp-dir))
     (nov-clean-up)
     (error "Invalid EPUB file"))
-  (let* ((content (-> (nov-container-filename nov-temp-dir)
-                      (nov-slurp)
-                      (xml-to-esxml)))
+  (let* ((content (nov-slurp (nov-container-filename nov-temp-dir) t))
          (content-file (->> (nov-container-content-filename content)
                             (nov-make-path nov-temp-dir)))
          (work-dir (file-name-directory content-file))
-         (content (-> (nov-slurp content-file)
-                      (xml-to-esxml))))
+         (content (nov-slurp content-file t)))
     (setq nov-content-file content-file)
     (setq nov-epub-version (nov-content-version content))
     (setq nov-metadata (nov-content-metadata content))

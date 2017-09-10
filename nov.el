@@ -117,9 +117,14 @@ Each alist item consists of the identifier and full path.")
   "Create a path from DIRECTORY and FILE."
   (concat (file-name-as-directory directory) file))
 
+(defun nov-directory-files (directory)
+  "Returns a list of files in DIRECTORY except for . and .."
+  (--remove (string-match-p "/\\.\\(?:\\.\\)?\\'" it)
+            (directory-files directory t)))
+
 (defun nov-contains-nested-directory-p (directory)
   "Non-nil if DIRECTORY contains exactly one directory."
-  (let* ((files (directory-files directory t "^[^.]"))
+  (let* ((files (nov-directory-files directory))
          (file (car files)))
     (and (= (length files) 1)
          (file-directory-p file)
@@ -128,9 +133,22 @@ Each alist item consists of the identifier and full path.")
 (defun nov-unnest-directory (directory child)
   "Move contents of CHILD into DIRECTORY, then delete CHILD."
   ;; FIXME: this will most certainly fail for con/con
-  (dolist (item (directory-files child t "^[^.]"))
+  (dolist (item (nov-directory-files child))
     (rename-file item directory))
   (delete-directory child))
+
+(defun nov--fix-permissions (file-or-directory)
+  (->> (file-modes file-or-directory)
+       (file-modes-symbolic-to-number "+r")
+       (set-file-modes file-or-directory)))
+
+(defun nov-fix-permissions (directory)
+  "Iterate recursively through DIRECTORY to fix its files."
+  (nov--fix-permissions directory)
+  (dolist (file (nov-directory-files directory))
+    (if (file-directory-p file)
+        (nov-fix-permissions file)
+      (nov--fix-permissions file))))
 
 (defun nov-unzip-epub (directory filename)
   "Extract FILENAME into DIRECTORY.
@@ -140,6 +158,9 @@ Unnecessary nesting is removed with `nov-unnest-directory'."
         child)
     (while (setq child (nov-contains-nested-directory-p directory))
       (nov-unnest-directory directory child))
+    ;; HACK: unzip preserves file permissions, no matter how silly they
+    ;; are, so ensure files and directories are readable
+    (nov-fix-permissions directory)
     status))
 
 (defmacro nov-ignore-file-errors (&rest body)
@@ -149,10 +170,6 @@ Unnecessary nesting is removed with `nov-unnest-directory'."
 (defun nov-slurp (filename &optional parse-xml-p)
   "Return the contents of FILENAME.
 If PARSE-XML-P is t, return the contents as parsed by libxml."
-  ;; HACK: unzip preserves file permissions, no matter how silly they
-  ;; are, so ensure files are readable
-  (when (not (file-readable-p filename))
-    (set-file-modes filename #o444))
   (with-temp-buffer
     (insert-file-contents filename)
     (if parse-xml-p

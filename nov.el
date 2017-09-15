@@ -30,6 +30,7 @@
 ;; Features:
 ;;
 ;; - Basic navigation (jump to TOC, previous/next chapter)
+;; - Remembering and restoring the last read position
 ;; - Jump to next chapter when scrolling beyond end
 ;; - Renders EPUB2 (.ncx) and EPUB3 (<nav>) TOCs
 ;; - Hyperlinks to internal and external targets
@@ -89,6 +90,13 @@ should change it to contain the rendered version of it.")
 (defcustom nov-post-html-render-hook nil
   "Hook run after `nov-render-html'."
   :type 'hook
+  :group 'nov)
+
+(defcustom nov-save-place-file (locate-user-emacs-file "nov-places")
+  "File name where last reading places are saved to and restored from.
+If set to `nil', no saving and restoring is performed."
+  :type '(choice (file  :tag "File name")
+                 (const :tag "Don't save last reading places" nil))
   :group 'nov)
 
 (defvar-local nov-temp-dir nil
@@ -233,7 +241,7 @@ UUID."
          (id (car (esxml-node-children (esxml-query selector content)))))
     (when (not id)
       (error "Unique identifier not found by its name: %s" name))
-    (replace-regexp-in-string "^urn:uuid:" "" id)))
+    (intern (replace-regexp-in-string "^urn:uuid:" "" id))))
 
 ;; NOTE: unique identifier is queried separately as identifiers can
 ;; appear more than once and only one of them can be the unique one
@@ -374,8 +382,13 @@ Each alist item consists of the identifier and full path."
     map))
 
 (defun nov-clean-up ()
-  "Delete temporary files of all current EPUB buffer."
+  "Delete temporary files of the current EPUB buffer."
   (when nov-temp-dir
+    (let ((identifier (cdr (assq 'identifier nov-metadata)))
+          (index (if (integerp nov-documents-index)
+                     nov-documents-index
+                   0)))
+      (nov-save-place identifier index (point)))
     (nov-ignore-file-errors
      (delete-directory nov-temp-dir t))))
 
@@ -612,6 +625,30 @@ Internal URLs are visited with `nov-visit-relative-file'."
         (browse-url url)
       (apply 'nov-visit-relative-file (nov-url-filename-and-target url)))))
 
+(defun nov-saved-places ()
+  "Retrieve saved places in `nov-save-place-file'."
+  (when (and nov-save-place-file (file-exists-p nov-save-place-file))
+    (with-temp-buffer
+      (insert-file-contents-literally nov-save-place-file)
+      (goto-char (point-min))
+      (read (current-buffer)))))
+
+(defun nov-saved-place (identifier)
+  "Retrieve saved place for IDENTIFIER in `nov-saved-place-file'."
+  (cdr (assq identifier (nov-saved-places))))
+
+(defun nov-save-place (identifier index point)
+  "Save place as identified by IDENTIFIER, INDEX and POINT.
+Saving is only done if `nov-save-place-file' is set."
+  (when nov-save-place-file
+    (let* ((place `(,identifier (index . ,index)
+                                (point . ,point)))
+           (places (cons place (assq-delete-all identifier (nov-saved-places))))
+           print-level
+           print-length)
+      (with-temp-file nov-save-place-file
+        (insert (prin1-to-string places))))))
+
 ;;;###autoload
 (define-derived-mode nov-mode special-mode "EPUB"
   "Major mode for reading EPUB documents"
@@ -644,7 +681,14 @@ Internal URLs are visited with `nov-visit-relative-file'."
     (setq nov-documents-index 0))
   (setq buffer-undo-list t)
   (set-visited-file-name nil t) ; disable autosaves and save questions
-  (nov-render-document))
+  (let ((place (nov-saved-place (cdr (assq 'identifier nov-metadata)))))
+    (if place
+        (let ((index (cdr (assq 'index place)))
+              (point (cdr (assq 'point place))))
+          (setq nov-documents-index index)
+          (nov-render-document)
+          (goto-char point))
+      (nov-render-document))))
 
 (provide 'nov)
 ;;; nov.el ends here

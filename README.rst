@@ -64,7 +64,8 @@ file:
 .. code:: elisp
 
     (defun my-nov-font-setup ()
-      (face-remap-add-relative 'variable-pitch :font "Liberation Serif-14"))
+      (face-remap-add-relative 'variable-pitch :family "Liberation Serif"
+                                               :height 1.0))
     (add-hook 'nov-mode-hook 'my-nov-font-setup)
 
 To completely disable the variable pitch font, customize
@@ -122,10 +123,11 @@ Here's an advanced example of text justification with the `justify-kp
             (save-excursion
               (goto-char (point-min))
               (while (not (eobp))
-                (goto-char (line-end-position))
-                (when (> (shr-pixel-column) max-width)
-                  (goto-char (line-beginning-position))
-                  (pj-justify))
+                (when (not (looking-at "^[[:space:]]*$"))
+                  (goto-char (line-end-position))
+                  (when (> (shr-pixel-column) max-width)
+                    (goto-char (line-beginning-position))
+                    (pj-justify)))
                 (forward-line 1))))
         (add-hook 'window-configuration-change-hook
                   'my-nov-window-configuration-change-hook

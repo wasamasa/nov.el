@@ -108,6 +108,7 @@ Here's an advanced example of text justification with the `justify-kp
 
 .. code:: elisp
 
+    (require 'justify-kp)
     (setq nov-text-width most-positive-fixnum)
 
     (defun my-nov-window-configuration-change-hook ()
@@ -134,6 +135,10 @@ Here's an advanced example of text justification with the `justify-kp
                   nil t)))
 
     (add-hook 'nov-post-html-render-hook 'my-nov-post-html-render-hook)
+
+This customization yields the following look:
+
+.. image:: https://raw.github.com/wasamasa/nov.el/master/img/justify-kp.png
 
 Usage
 -----

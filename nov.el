@@ -556,7 +556,7 @@ the HTML is rendered with `nov-render-html-function'."
                     (let ((beg (point)))
                       (insert value)
                       (shr-render-region beg (point)))
-                  (insert value))
+                  (insert (format "%s" value)))
               (insert (propertize "None" 'face 'italic)))
             (insert "\n")))
         (goto-char (point-min))))

@@ -241,7 +241,7 @@ UUID."
          (id (car (esxml-node-children (esxml-query selector content)))))
     (when (not id)
       (error "Unique identifier not found by its name: %s" name))
-    (intern (replace-regexp-in-string "^urn:uuid:" "" id))))
+    (intern id)))
 
 ;; NOTE: unique identifier is queried separately as identifiers can
 ;; appear more than once and only one of them can be the unique one

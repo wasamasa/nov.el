@@ -212,8 +212,9 @@ If PARSE-XML-P is t, return the contents as parsed by libxml."
 
 (defun nov-epub-valid-p (directory)
   "Return t if DIRECTORY makes up a valid EPUB document."
-  (and (nov-mimetype-valid-p directory)
-       (nov-container-valid-p directory)))
+  (when (not (nov-mimetype-valid-p directory))
+    (message "Invalid mimetype"))
+  (nov-container-valid-p directory))
 
 (defun nov-content-version (content)
   "Return the EPUB version for CONTENT."

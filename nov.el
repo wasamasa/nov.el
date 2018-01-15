@@ -145,18 +145,18 @@ Each alist item consists of the identifier and full path.")
     (rename-file item directory))
   (delete-directory child))
 
-(defun nov--fix-permissions (file-or-directory)
+(defun nov--fix-permissions (file-or-directory mode)
   (->> (file-modes file-or-directory)
-       (file-modes-symbolic-to-number "+r")
+       (file-modes-symbolic-to-number mode)
        (set-file-modes file-or-directory)))
 
 (defun nov-fix-permissions (directory)
   "Iterate recursively through DIRECTORY to fix its files."
-  (nov--fix-permissions directory)
+  (nov--fix-permissions directory "+rx")
   (dolist (file (nov-directory-files directory))
     (if (file-directory-p file)
         (nov-fix-permissions file)
-      (nov--fix-permissions file))))
+      (nov--fix-permissions file "+r"))))
 
 (defun nov-unzip-epub (directory filename)
   "Extract FILENAME into DIRECTORY.

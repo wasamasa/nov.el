@@ -225,9 +225,9 @@ If PARSE-XML-P is t, return the contents as parsed by libxml."
     version))
 
 (defun nov-content-unique-identifier-name (content)
-  "Return the UUID name for CONTENT.
+  "Return the unique identifier name referenced in CONTENT.
 This is used in `nov-content-unique-identifier' to retrieve the
-UUID."
+the specific type of unique identifier."
   (let* ((node (esxml-query "package[unique-identifier]" content))
          (name (esxml-node-attribute 'unique-identifier node)))
     (when (not name)
@@ -235,7 +235,7 @@ UUID."
     name))
 
 (defun nov-content-unique-identifier (content)
-  "Return the UUID for CONTENT."
+  "Return the the unique identifier for CONTENT."
   (let* ((name (nov-content-unique-identifier-name content))
          (selector (format "package>metadata>identifier[id='%s']"
                            (regexp-quote name)))

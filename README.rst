@@ -72,6 +72,10 @@ To completely disable the variable pitch font, customize
 ``nov-variable-pitch`` to ``nil``.  Text will be displayed with the
 default face instead which should be using a monospace font.
 
+Note: If you use ``global-whitespace-mode``, you may have to 
+``(setq whitespace-global-modes '(not nov-mode))`` (see the help for that
+variable), otherwise the font may show as monospace.
+
 Text width
 ..........
 

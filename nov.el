@@ -1,10 +1,10 @@
 ;;; nov.el --- Featureful EPUB reader mode
 
-;; Copyright (C) 2017 Vasilij Schneidermann <mail@vasilij.de>
+;; Copyright (C) 2017-2018 Vasilij Schneidermann <mail@vasilij.de>
 
 ;; Author: Vasilij Schneidermann <mail@vasilij.de>
 ;; URL: https://github.com/wasamasa/nov.el
-;; Version: 0.2.3
+;; Version: 0.2.4
 ;; Package-Requires: ((dash "2.12.0") (esxml "0.3.3") (emacs "24.4"))
 ;; Keywords: hypermedia, multimedia, epub
 

@@ -102,6 +102,9 @@ If set to `nil', no saving and restoring is performed."
 (defvar-local nov-file-name nil
   "Path to the EPUB file backing this buffer.")
 
+(defvar-local nov-save-list nil
+  "List to save locations after jumps")
+
 (defvar-local nov-temp-dir nil
   "Temporary directory containing the buffer's EPUB files.")
 
@@ -368,6 +371,7 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "V") 'nov-view-content-source)
     (define-key map (kbd "m") 'nov-display-metadata)
     (define-key map (kbd "n") 'nov-next-document)
+    (define-key map (kbd "l") 'nov-go-back)
     (define-key map (kbd "]") 'nov-next-document)
     (define-key map (kbd "p") 'nov-previous-document)
     (define-key map (kbd "[") 'nov-previous-document)
@@ -528,8 +532,15 @@ the HTML is rendered with `nov-render-html-function'."
   (let ((index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id)))))
     (when (not index)
       (error "Couldn't locate TOC"))
+    (push nov-documents-index nov-save-list)
     (setq nov-documents-index index)
     (nov-render-document)))
+
+(defun nov-go-back ()
+  (interactive)
+  (if-let ((nov-documents-index (pop nov-save-list)))
+      (nov-render-document)
+    (user-error "Empty save list")))
 
 (defun nov-view-source ()
   "View the source of the current document in a new buffer."
@@ -622,12 +633,14 @@ the HTML is rendered with `nov-render-html-function'."
 Internal URLs are visited with `nov-visit-relative-file'."
   (interactive (list last-nonmenu-event))
   (mouse-set-point mouse-event)
-  (let ((url (get-text-property (point) 'shr-url)))
+  (let ((url (get-text-property (point) 'shr-url))
+	(index nov-documents-index))
     (when (not url)
       (user-error "No link under point"))
     (if (nov-external-url-p url)
-        (browse-url url)
-      (apply 'nov-visit-relative-file (nov-url-filename-and-target url)))))
+	(browse-url url)
+      (apply 'nov-visit-relative-file (nov-url-filename-and-target url)))
+    (push index nov-save-list)))
 
 (defun nov-saved-places ()
   "Retrieve saved places in `nov-save-place-file'."

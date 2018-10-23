@@ -219,6 +219,11 @@ If PARSE-XML-P is t, return the contents as parsed by libxml."
     (message "Invalid mimetype"))
   (nov-container-valid-p directory))
 
+(defun nov-urldecode (string)
+  "Return urldecoded version of STRING or nil."
+  (when string
+    (url-unhex-string string)))
+
 (defun nov-content-version (content)
   "Return the EPUB version for CONTENT."
   (let* ((node (esxml-query "package" content))
@@ -285,7 +290,7 @@ Each alist item consists of the identifier and full path."
   (mapcar (lambda (node)
             (-let [(&alist 'id id 'href href) (esxml-node-attributes node)]
               (cons (intern id)
-                    (nov-make-path directory href))))
+                    (nov-make-path directory (nov-urldecode href)))))
           (esxml-query-all "package>manifest>item" content)))
 
 (defun nov-content-spine (content)
@@ -338,7 +343,7 @@ Each alist item consists of the identifier and full path."
      ((eq tag 'navPoint)
       (let* ((label-node (esxml-query "navLabel>text" node))
              (content-node (esxml-query "content" node))
-             (href (esxml-node-attribute 'src content-node))
+             (href (nov-urldecode (esxml-node-attribute 'src content-node)))
              (label (car (esxml-node-children label-node))))
         (when (not href)
           (error "Navigation point is missing href attribute"))
@@ -410,7 +415,7 @@ Each alist item consists of the identifier and full path."
 (defun nov-url-filename-and-target (url)
   "Return a list of URL's filename and target."
   (setq url (url-generic-parse-url url))
-  (mapcar 'url-unhex-string (list (url-filename url) (url-target url))))
+  (mapcar 'nov-urldecode (list (url-filename url) (url-target url))))
 
 (defun nov-insert-image (path)
   "Insert an image for PATH at point.
@@ -443,7 +448,7 @@ internal ones."
         ;; `cl-letf' to override `shr-tag-img' with a function that
         ;; might call `shr-tag-img' again
         (funcall nov-original-shr-tag-img-function dom url)
-      (setq url (expand-file-name url))
+      (setq url (expand-file-name (nov-urldecode url)))
       (nov-insert-image url))))
 
 (defun nov-render-title (dom)

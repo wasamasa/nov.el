@@ -709,5 +709,15 @@ Saving is only done if `nov-save-place-file' is set."
             (nov-render-document)))
       (nov-render-document))))
 
+
+;;; interop
+
+(require 'recentf)
+(defun nov-add-to-recentf ()
+  (when nov-file-name
+    (recentf-add-file nov-file-name)))
+
+(add-hook 'nov-mode-hook 'nov-add-to-recentf)
+
 (provide 'nov)
 ;;; nov.el ends here

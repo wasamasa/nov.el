@@ -376,6 +376,8 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "]") 'nov-next-document)
     (define-key map (kbd "p") 'nov-previous-document)
     (define-key map (kbd "[") 'nov-previous-document)
+    (define-key map (kbd "s") 'nov-search-forward)
+    (define-key map (kbd "b") 'nov-search-backward)
     (define-key map (kbd "t") 'nov-goto-toc)
     (define-key map (kbd "RET") 'nov-browse-url)
     (define-key map (kbd "<follow-link>") 'mouse-face)
@@ -662,6 +664,39 @@ Saving is only done if `nov-save-place-file' is set."
   (and (integerp index)
        (>= index 0)
        (< index (length documents))))
+
+(defun nov--search-direction (query direction)
+  "Search document for QUERY in the specified DIRECTION.  DIRECTION should be either :forward or :backward."
+  (cl-multiple-value-setq (search-fn next-page-fn buffer-edge-fn)
+    (or (and (eq direction :forward)
+	     '(search-forward
+	       nov-next-document
+	       beginning-of-buffer))
+	'(search-backward
+	  nov-previous-document
+	  end-of-buffer)))
+  (lexical-let* ((original-index nov-documents-index)
+		 (original-point (point))
+		 (found (funcall search-fn query nil t)))
+    (while (and (not found)
+		(funcall next-page-fn))
+      (funcall buffer-edge-fn)
+      (setf found (funcall search-fn query nil t)))
+    (unless found
+      (setf nov-documents-index original-index)
+      (nov-render-document)
+      (setf (point) original-point)
+      (message "No match found for %s." query))))
+
+(defun nov-search-backward (query)
+  "Search the document backward for QUERY."
+  (interactive "sSearch query backward: ")
+  (nov--search-direction query :backward))
+
+(defun nov-search-forward (query)
+  "Search the document forward for QUERY."
+  (interactive "sSearch query: ")
+  (nov--search-direction query :forward))
 
 ;;;###autoload
 (define-derived-mode nov-mode special-mode "EPUB"

@@ -378,6 +378,7 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "[") 'nov-previous-document)
     (define-key map (kbd "t") 'nov-goto-toc)
     (define-key map (kbd "RET") 'nov-browse-url)
+    (define-key map (kbd "c") 'nov-copy-url)
     (define-key map (kbd "<follow-link>") 'mouse-face)
     (define-key map (kbd "<mouse-2>") 'nov-browse-url)
     (define-key map (kbd "TAB") 'shr-next-link)
@@ -633,6 +634,15 @@ Internal URLs are visited with `nov-visit-relative-file'."
     (if (nov-external-url-p url)
         (browse-url url)
       (apply 'nov-visit-relative-file (nov-url-filename-and-target url)))))
+
+(defun nov-copy-url (&optional mouse-event)
+  (interactive (list last-nonmenu-event))
+  (mouse-set-point mouse-event)
+  (let ((url (get-text-property (point) 'shr-url)))
+    (when (not url)
+      (user-error "No link under point"))
+    (kill-new url)
+    (message url)))
 
 (defun nov-saved-places ()
   "Retrieve saved places in `nov-save-place-file'."

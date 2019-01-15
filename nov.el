@@ -1,6 +1,6 @@
 ;;; nov.el --- Featureful EPUB reader mode
 
-;; Copyright (C) 2017-2018 Vasilij Schneidermann <mail@vasilij.de>
+;; Copyright (C) 2017-2019 Vasilij Schneidermann <mail@vasilij.de>
 
 ;; Author: Vasilij Schneidermann <mail@vasilij.de>
 ;; URL: https://github.com/wasamasa/nov.el

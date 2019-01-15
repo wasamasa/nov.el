@@ -371,6 +371,7 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "g") 'nov-render-document)
     (define-key map (kbd "v") 'nov-view-source)
     (define-key map (kbd "V") 'nov-view-content-source)
+    (define-key map (kbd "a") 'nov-reopen-as-archive)
     (define-key map (kbd "m") 'nov-display-metadata)
     (define-key map (kbd "n") 'nov-next-document)
     (define-key map (kbd "]") 'nov-next-document)
@@ -545,6 +546,12 @@ the HTML is rendered with `nov-render-html-function'."
   "View the source of the content file in a new buffer."
   (interactive)
   (find-file nov-content-file))
+
+(defun nov-reopen-as-archive ()
+  "Reopen the EPUB document using `archive-mode'."
+  (interactive)
+  (with-current-buffer (find-file-literally nov-file-name)
+    (archive-mode)))
 
 (defun nov-display-metadata ()
   "View the metadata of the EPUB document in a new buffer."

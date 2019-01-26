@@ -337,9 +337,9 @@ Each alist item consists of the identifier and full path."
                             (esxml-node-children node))))
     (cond
      ((eq tag 'navMap)
-      (insert "<ol>\n")
+      (insert "<ul>\n")
       (mapc (lambda (node) (nov--walk-ncx-node node (1+ depth))) children)
-      (insert "</ol>\n"))
+      (insert "</ul>\n"))
      ((eq tag 'navPoint)
       (let* ((label-node (esxml-query "navLabel>text" node))
              (content-node (esxml-query "content" node))
@@ -350,15 +350,16 @@ Each alist item consists of the identifier and full path."
         (let ((link (format "<a href=\"%s\">%s</a>" href (or label href))))
           (if children
               (progn
-                (insert (format "<li>\n%s\n<ol>\n" link))
+                (insert (format "<li>\n%s\n<ul>\n" link))
                 (mapc (lambda (node) (nov--walk-ncx-node node (1+ depth)))
                       children)
-                (insert (format "</ol>\n</li>\n")))
+                (insert (format "</ul>\n</li>\n")))
             (insert (format "<li>\n%s\n</li>\n" link)))))))))
 
 (defun nov-ncx-to-html (path)
   "Convert NCX document at PATH to HTML."
-  (let ((root (esxml-query "navMap" (nov-slurp path t))))
+  (let ((root (esxml-query "navMap" (nov-slurp path t)))
+        (shr-bullet nil))
     (with-temp-buffer
       (nov--walk-ncx-node root 0)
       (buffer-string))))
@@ -531,7 +532,8 @@ the HTML is rendered with `nov-render-html-function'."
 (defun nov-goto-toc ()
   "Go to the TOC index and render the TOC document."
   (interactive)
-  (let ((index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id)))))
+  (let ((index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id))))
+        (shr-bullet " "))
     (when (not index)
       (error "Couldn't locate TOC"))
     (setq nov-documents-index index)

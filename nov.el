@@ -80,7 +80,9 @@ effect in Emacs 25.1 or greater."
 (defcustom nov-render-html-function 'nov-render-html
   "Function used to render HTML.
 It's called without arguments with a buffer containing HTML and
-should change it to contain the rendered version of it.")
+should change it to contain the rendered version of it."
+  :type 'function
+  :group 'nov)
 
 (defcustom nov-pre-html-render-hook nil
   "Hook run before `nov-render-html'."

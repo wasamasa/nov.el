@@ -727,6 +727,7 @@ Saving is only done if `nov-save-place-file' is set."
     (recentf-add-file nov-file-name)))
 
 (add-hook 'nov-mode-hook 'nov-add-to-recentf)
+(add-hook 'nov-mode-hook 'hack-dir-local-variables-non-file-buffer)
 
 (provide 'nov)
 ;;; nov.el ends here

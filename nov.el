@@ -445,14 +445,15 @@ This function honors `shr-max-image-proportion' if possible."
   "Custom <img> rendering function for DOM.
 Uses `shr-tag-img' for external paths and `nov-insert-image' for
 internal ones."
-  (let ((url (or url (cdr (assq 'src (cadr dom))))))
-    (if (nov-external-url-p url)
-        ;; HACK: avoid hanging in an infinite loop when using
-        ;; `cl-letf' to override `shr-tag-img' with a function that
-        ;; might call `shr-tag-img' again
-        (funcall nov-original-shr-tag-img-function dom url)
-      (setq url (expand-file-name (nov-urldecode url)))
-      (nov-insert-image url))))
+  (if (display-graphic-p)
+      (let ((url (or url (cdr (assq 'src (cadr dom))))))
+        (if (nov-external-url-p url)
+            ;; HACK: avoid hanging in an infinite loop when using
+            ;; `cl-letf' to override `shr-tag-img' with a function that
+            ;; might call `shr-tag-img' again
+            (funcall nov-original-shr-tag-img-function dom url)
+          (setq url (expand-file-name (nov-urldecode url)))
+          (nov-insert-image url)))))
 
 (defun nov-render-title (dom)
   "Custom <title> rendering function for DOM.

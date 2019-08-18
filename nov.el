@@ -420,23 +420,31 @@ Each alist item consists of the identifier and full path."
   (setq url (url-generic-parse-url url))
   (mapcar 'nov-urldecode (list (url-filename url) (url-target url))))
 
-(defun nov-insert-image (path)
-  "Insert an image for PATH at point.
+(defun nov-insert-image (path alt)
+  "Insert an image for PATH at point, falling back to ALT.
 This function honors `shr-max-image-proportion' if possible."
-  ;; adapted from `shr-rescale-image'
-  (if (fboundp 'imagemagick-types)
-      (let ((edges (window-inside-pixel-edges
-                    (get-buffer-window (current-buffer)))))
-        (insert-image
-         (create-image path 'imagemagick nil
-                       :ascent 100
-                       :max-width (truncate (* shr-max-image-proportion
-                                               (- (nth 2 edges)
-                                                  (nth 0 edges))))
-                       :max-height (truncate (* shr-max-image-proportion
-                                                (- (nth 3 edges)
-                                                   (nth 1 edges)))))))
-    (insert-image (create-image path nil nil :ascent 100))))
+  (cond
+   ((not (display-graphic-p))
+    (insert alt))
+   ((fboundp 'imagemagick-types)
+    ;; adapted from `shr-rescale-image'
+    (let ((edges (window-inside-pixel-edges
+                  (get-buffer-window (current-buffer)))))
+      (insert-image
+       (create-image path 'imagemagick nil
+                     :ascent 100
+                     :max-width (truncate (* shr-max-image-proportion
+                                             (- (nth 2 edges)
+                                                (nth 0 edges))))
+                     :max-height (truncate (* shr-max-image-proportion
+                                              (- (nth 3 edges)
+                                                 (nth 1 edges))))))))
+   (t
+    ;; `create-image' errors out for unsupported image types
+    (let ((image (ignore-errors (create-image path nil nil :ascent 100))))
+      (if image
+          (insert-image image)
+        (insert alt))))))
 
 (defvar nov-original-shr-tag-img-function
   (symbol-function 'shr-tag-img))
@@ -445,14 +453,15 @@ This function honors `shr-max-image-proportion' if possible."
   "Custom <img> rendering function for DOM.
 Uses `shr-tag-img' for external paths and `nov-insert-image' for
 internal ones."
-  (let ((url (or url (cdr (assq 'src (cadr dom))))))
+  (let ((url (or url (cdr (assq 'src (cadr dom)))))
+        (alt (or (cdr (assq 'alt (cadr dom))) "")))
     (if (nov-external-url-p url)
         ;; HACK: avoid hanging in an infinite loop when using
         ;; `cl-letf' to override `shr-tag-img' with a function that
         ;; might call `shr-tag-img' again
         (funcall nov-original-shr-tag-img-function dom url)
       (setq url (expand-file-name (nov-urldecode url)))
-      (nov-insert-image url))))
+      (nov-insert-image url alt))))
 
 (defun nov-render-title (dom)
   "Custom <title> rendering function for DOM.
@@ -507,7 +516,7 @@ the HTML is rendered with `nov-render-html-function'."
 
     (cond
      (imagep
-      (nov-insert-image path))
+      (nov-insert-image path ""))
      ((and (version< nov-epub-version "3.0")
            (eq id nov-toc-id))
       (insert (nov-ncx-to-html path)))

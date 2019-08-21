@@ -82,13 +82,13 @@ By default text is filled by the window width.  You can customize
 
     (setq nov-text-width 80)
 
-It's also possible to set it to a huge number to inhibit text filling,
-this can be used in combination with ``visual-line-mode`` and packages
-such as ``visual-fill-column`` to implement more flexible filling:
+It's also possible to set it to ``t`` to inhibit text filling, this
+can be used in combination with ``visual-line-mode`` and packages such
+as ``visual-fill-column`` to implement more flexible filling:
 
 .. code:: elisp
 
-    (setq nov-text-width most-positive-fixnum)
+    (setq nov-text-width t)
     (setq visual-fill-column-center-text t)
     (add-hook 'nov-mode-hook 'visual-line-mode)
     (add-hook 'nov-mode-hook 'visual-fill-column-mode)
@@ -109,7 +109,7 @@ Here's an advanced example of text justification with the `justify-kp
 .. code:: elisp
 
     (require 'justify-kp)
-    (setq nov-text-width most-positive-fixnum)
+    (setq nov-text-width t)
 
     (defun my-nov-window-configuration-change-hook ()
       (my-nov-post-html-render-hook)

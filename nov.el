@@ -717,6 +717,8 @@ Saving is only done if `nov-save-place-file' is set."
     (setq nov-documents-index 0))
   (setq buffer-undo-list t)
   (setq nov-file-name (buffer-file-name))
+  (setq-local bookmark-make-record-function
+              'nov-bookmark-make-record)
   (set-visited-file-name nil t) ; disable autosaves and save questions
   (let ((place (nov-saved-place (cdr (assq 'identifier nov-metadata)))))
     (if place
@@ -741,6 +743,42 @@ Saving is only done if `nov-save-place-file' is set."
 
 (add-hook 'nov-mode-hook 'nov-add-to-recentf)
 (add-hook 'nov-mode-hook 'hack-dir-local-variables-non-file-buffer)
+
+
+;; Bookmark Integration
+(defun nov-bookmark-make-record  ()
+  "Create a bookmark epub record."
+  (cons (buffer-name)
+        `((filename . ,nov-file-name)
+          (index . ,nov-documents-index)
+          (position . ,(point))
+          (handler . nov-bookmark-jump-handler))))
+
+;;;###autoload
+(defun nov-bookmark-jump-handler (bmk)
+  "The bookmark handler-function interface for bookmark BMK.
+
+See also `nov-bookmark-make-record'."
+  (let ((file (bookmark-prop-get bmk 'filename))
+        (index (bookmark-prop-get bmk 'index))
+        (position (bookmark-prop-get bmk 'position)))
+    (switch-to-buffer (or (cl-find-if (lambda (buffer)
+                                        (with-current-buffer buffer
+                                          (and (eq major-mode 'nov-mode)
+                                               (string= file nov-file-name)
+                                               (= index nov-documents-index))))
+                                      (buffer-list))
+                          (find-buffer-visiting file)
+                          (find-file-existing file)
+                          ;; (find-file-noselect file)
+                          ))
+    (unless (eq major-mode 'nov-mode)
+      (nov-mode))
+    (when (nov--index-valid-p nov-documents index)
+      (setq nov-documents-index index)
+      (nov-render-document)
+      (goto-char position))))
+
 
 (provide 'nov)
 ;;; nov.el ends here

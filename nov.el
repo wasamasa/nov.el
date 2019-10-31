@@ -128,6 +128,14 @@ Each alist item consists of the identifier and full path.")
 (defvar-local nov-toc-id nil
   "TOC identifier of the EPUB buffer.")
 
+(defvar-local nov-history nil
+  "Stack of documents user has visited.
+Each element of the stack is a list (NODEINDEX BUFFERPOS).")
+
+(defvar-local nov-history-forward nil
+  "Stack of documents user has visited with `nov-history-back' command.
+Each element of the stack is a list (NODEINDEX BUFFERPOS).")
+
 (defun nov-make-path (directory file)
   "Create a path from DIRECTORY and FILE."
   (concat (file-name-as-directory directory) file))
@@ -382,6 +390,8 @@ Each alist item consists of the identifier and full path."
     (define-key map (kbd "p") 'nov-previous-document)
     (define-key map (kbd "[") 'nov-previous-document)
     (define-key map (kbd "t") 'nov-goto-toc)
+    (define-key map (kbd "l") 'nov-history-back)
+    (define-key map (kbd "r") 'nov-history-forward)
     (define-key map (kbd "RET") 'nov-browse-url)
     (define-key map (kbd "<follow-link>") 'mouse-face)
     (define-key map (kbd "<mouse-2>") 'nov-browse-url)
@@ -545,14 +555,21 @@ the HTML is rendered with `nov-render-html-function'."
     (when done
       (1- i))))
 
+(defun nov-goto-document (index)
+  "Go to the document denoted by INDEX."
+  (let ((history (cons (list nov-documents-index (point))
+                       nov-history)))
+    (setq nov-documents-index index)
+    (nov-render-document)
+    (setq nov-history history)))
+
 (defun nov-goto-toc ()
   "Go to the TOC index and render the TOC document."
   (interactive)
   (let ((index (nov-find-document (lambda (doc) (eq (car doc) nov-toc-id)))))
     (when (not index)
       (error "Couldn't locate TOC"))
-    (setq nov-documents-index index)
-    (nov-render-document)))
+    (nov-goto-document index)))
 
 (defun nov-view-source ()
   "View the source of the current document in a new buffer."
@@ -599,15 +616,13 @@ the HTML is rendered with `nov-render-html-function'."
   "Go to the next document and render it."
   (interactive)
   (when (< nov-documents-index (1- (length nov-documents)))
-    (setq nov-documents-index (1+ nov-documents-index))
-    (nov-render-document)))
+    (nov-goto-document (1+ nov-documents-index))))
 
 (defun nov-previous-document ()
   "Go to the previous document and render it."
   (interactive)
   (when (> nov-documents-index 0)
-    (setq nov-documents-index (1- nov-documents-index))
-    (nov-render-document)))
+    (nov-goto-document (1- nov-documents-index))))
 
 (defun nov-scroll-up (arg)
   "Scroll with `scroll-up' or visit next chapter if at bottom."
@@ -635,9 +650,8 @@ the HTML is rendered with `nov-render-html-function'."
                  (lambda (doc) (equal path (file-truename (cdr doc)))))))
     (when (not index)
       (error "Couldn't locate document"))
-    (setq nov-documents-index index)
     (let ((shr-target-id target))
-      (nov-render-document))
+      (nov-goto-document index))
     (when target
       (let ((pos (next-single-property-change (point-min) 'shr-target-id)))
         (when (not pos)
@@ -686,6 +700,34 @@ Saving is only done if `nov-save-place-file' is set."
   (and (integerp index)
        (>= index 0)
        (< index (length documents))))
+
+(defun nov-history-back ()
+  "Go back in the history to the last visited document."
+  (interactive)
+  (or nov-history
+      (user-error "This is the first document you looked at"))
+  (let ((history-forward
+         (cons (list nov-documents-index (point))
+               nov-history-forward))
+        (index (nth 0 (car nov-history)))
+        (opoint (nth 1 (car nov-history))))
+    (setq nov-history (cdr nov-history))
+    (nov-goto-document index)
+    (setq nov-history (cdr nov-history))
+    (setq nov-history-forward history-forward)
+    (goto-char opoint)))
+
+(defun nov-history-forward ()
+  "Go forward in the history of visited documents."
+  (interactive)
+  (or nov-history-forward
+      (user-error "This is the last document you looked at"))
+  (let ((history-forward (cdr nov-history-forward))
+        (index (nth 0 (car nov-history-forward)))
+        (opoint (nth 1 (car nov-history-forward))))
+    (nov-goto-document index)
+    (setq nov-history-forward history-forward)
+    (goto-char opoint)))
 
 ;;;###autoload
 (define-derived-mode nov-mode special-mode "EPUB"

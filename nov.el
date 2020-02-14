@@ -709,8 +709,8 @@ Saving is only done if `nov-save-place-file' is set."
   (let ((history-forward
          (cons (list nov-documents-index (point))
                nov-history-forward))
-        (index (nth 0 (car nov-history)))
-        (opoint (nth 1 (car nov-history))))
+        (index (car (car nov-history)))
+        (opoint (cadr (car nov-history))))
     (setq nov-history (cdr nov-history))
     (nov-goto-document index)
     (setq nov-history (cdr nov-history))
@@ -723,8 +723,8 @@ Saving is only done if `nov-save-place-file' is set."
   (or nov-history-forward
       (user-error "This is the last document you looked at"))
   (let ((history-forward (cdr nov-history-forward))
-        (index (nth 0 (car nov-history-forward)))
-        (opoint (nth 1 (car nov-history-forward))))
+        (index (car (car nov-history-forward)))
+        (opoint (cadr (car nov-history-forward))))
     (nov-goto-document index)
     (setq nov-history-forward history-forward)
     (goto-char opoint)))

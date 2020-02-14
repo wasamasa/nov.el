@@ -36,7 +36,7 @@
 ;; - Renders EPUB2 (.ncx) and EPUB3 (<nav>) TOCs
 ;; - Hyperlinks to internal and external targets
 ;; - Supports textual and image documents
-;; - Info-style History navigation
+;; - Info-style history navigation
 ;; - View source of document files
 ;; - Metadata display
 ;; - Image rescaling

@@ -681,7 +681,7 @@ Internal URLs are visited with `nov-visit-relative-file'."
     (when (not url)
       (user-error "No link under point"))
     (kill-new url)
-    (message url)))
+    (message "%s" url)))
 
 (defun nov-saved-places ()
   "Retrieve saved places in `nov-save-place-file'."

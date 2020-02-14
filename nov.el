@@ -32,6 +32,7 @@
 ;; - Basic navigation (jump to TOC, previous/next chapter)
 ;; - Remembering and restoring the last read position
 ;; - Jump to next chapter when scrolling beyond end
+;; - Storing and following Org links to EPUB files
 ;; - Renders EPUB2 (.ncx) and EPUB3 (<nav>) TOCs
 ;; - Hyperlinks to internal and external targets
 ;; - Supports textual and image documents
@@ -427,6 +428,7 @@ This function honors `shr-max-image-proportion' if possible."
   (cond
    ((not (display-graphic-p))
     (insert alt))
+   ;; TODO: add native resizing support once it's official
    ((fboundp 'imagemagick-types)
     ;; adapted from `shr-rescale-image'
     (let ((edges (window-inside-pixel-edges
@@ -732,7 +734,7 @@ Saving is only done if `nov-save-place-file' is set."
       (nov-render-document))))
 
 
-;;; interop
+;;; recentf interop
 
 (require 'recentf)
 (defun nov-add-to-recentf ()
@@ -741,6 +743,39 @@ Saving is only done if `nov-save-place-file' is set."
 
 (add-hook 'nov-mode-hook 'nov-add-to-recentf)
 (add-hook 'nov-mode-hook 'hack-dir-local-variables-non-file-buffer)
+
+
+;;; org interop
+
+(require 'org)
+
+(defun nov-org-link-follow (path)
+  (if (string-match "^\\(.*\\)::\\([0-9]+\\):\\([0-9]+\\)$" path)
+      (let ((file (match-string 1 path))
+            (index (string-to-number (match-string 2 path)))
+            (point (string-to-number (match-string 3 path))))
+        (find-file file)
+        (when (not (nov--index-valid-p nov-documents index))
+          (error "Invalid documents index"))
+        (setq nov-documents-index index)
+        (nov-render-document)
+        (goto-char point))
+    (error "Invalid nov.el link")))
+
+(defun nov-org-link-store ()
+  (when (not (and (eq major-mode 'nov-mode) nov-file-name))
+    (error "Not in a nov.el buffer"))
+  (when (not (integerp nov-documents-index))
+    (setq nov-documents-index 0))
+  (org-store-link-props
+   :type "nov"
+   :link (format "nov:%s::%d:%d" nov-file-name nov-documents-index (point))
+   :description (format "EPUB file at %s" nov-file-name)))
+
+(org-link-set-parameters
+ "nov"
+ :follow 'nov-org-link-follow
+ :store 'nov-org-link-store)
 
 (provide 'nov)
 ;;; nov.el ends here

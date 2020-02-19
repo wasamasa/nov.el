@@ -48,6 +48,9 @@
 (require 'esxml-query)
 (require 'shr)
 (require 'url-parse)
+(require 'recentf)
+(require 'bookmark)
+(require 'org)
 
 (when (not (fboundp 'libxml-parse-xml-region))
   (message "Your Emacs wasn't compiled with libxml support"))
@@ -791,7 +794,6 @@ Saving is only done if `nov-save-place-file' is set."
 
 ;;; recentf interop
 
-(require 'recentf)
 (defun nov-add-to-recentf ()
   (when nov-file-name
     (recentf-add-file nov-file-name)))
@@ -800,7 +802,7 @@ Saving is only done if `nov-save-place-file' is set."
 (add-hook 'nov-mode-hook 'hack-dir-local-variables-non-file-buffer)
 
 
-(defun nov--find-file (file index position)
+(defun nov--find-file (file index point)
   "Open FILE(nil means current buffer) in nov-mode and go to the specified INDEX and POSITION."
   (when file
     (find-file file))
@@ -821,7 +823,6 @@ Saving is only done if `nov-save-place-file' is set."
           (position . ,(point))
           (handler . nov-bookmark-jump-handler))))
 
-;;;###autoload
 (defun nov-bookmark-jump-handler (bmk)
   "The bookmark handler-function interface for bookmark BMK.
 
@@ -833,8 +834,6 @@ See also `nov-bookmark-make-record'."
 
 
 ;;; org interop
-
-(require 'org)
 
 (defun nov-org-link-follow (path)
   (if (string-match "^\\(.*\\)::\\([0-9]+\\):\\([0-9]+\\)$" path)

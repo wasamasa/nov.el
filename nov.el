@@ -48,6 +48,9 @@
 (require 'esxml-query)
 (require 'shr)
 (require 'url-parse)
+(require 'recentf)
+(require 'bookmark)
+(require 'org)
 
 (when (not (fboundp 'libxml-parse-xml-region))
   (message "Your Emacs wasn't compiled with libxml support"))
@@ -772,6 +775,8 @@ Saving is only done if `nov-save-place-file' is set."
     (setq nov-documents-index 0))
   (setq buffer-undo-list t)
   (setq nov-file-name (buffer-file-name))
+  (setq-local bookmark-make-record-function
+              'nov-bookmark-make-record)
   (set-visited-file-name nil t) ; disable autosaves and save questions
   (let ((place (nov-saved-place (cdr (assq 'identifier nov-metadata)))))
     (if place
@@ -789,7 +794,6 @@ Saving is only done if `nov-save-place-file' is set."
 
 ;;; recentf interop
 
-(require 'recentf)
 (defun nov-add-to-recentf ()
   (when nov-file-name
     (recentf-add-file nov-file-name)))
@@ -798,21 +802,45 @@ Saving is only done if `nov-save-place-file' is set."
 (add-hook 'nov-mode-hook 'hack-dir-local-variables-non-file-buffer)
 
 
-;;; org interop
+(defun nov--find-file (file index point)
+  "Open FILE(nil means current buffer) in nov-mode and go to the specified INDEX and POSITION."
+  (when file
+    (find-file file))
+  (unless (eq major-mode 'nov-mode)
+    (nov-mode))
+  (when (not (nov--index-valid-p nov-documents index))
+    (error "Invalid documents index"))
+  (setq nov-documents-index index)
+  (nov-render-document)
+  (goto-char point))
 
-(require 'org)
+;; Bookmark Integration
+(defun nov-bookmark-make-record  ()
+  "Create a bookmark epub record."
+  (cons (buffer-name)
+        `((filename . ,nov-file-name)
+          (index . ,nov-documents-index)
+          (position . ,(point))
+          (handler . nov-bookmark-jump-handler))))
+
+(defun nov-bookmark-jump-handler (bmk)
+  "The bookmark handler-function interface for bookmark BMK.
+
+See also `nov-bookmark-make-record'."
+  (let ((file (bookmark-prop-get bmk 'filename))
+        (index (bookmark-prop-get bmk 'index))
+        (position (bookmark-prop-get bmk 'position)))
+    (nov--find-file file index position)))
+
+
+;;; org interop
 
 (defun nov-org-link-follow (path)
   (if (string-match "^\\(.*\\)::\\([0-9]+\\):\\([0-9]+\\)$" path)
       (let ((file (match-string 1 path))
             (index (string-to-number (match-string 2 path)))
             (point (string-to-number (match-string 3 path))))
-        (find-file file)
-        (when (not (nov--index-valid-p nov-documents index))
-          (error "Invalid documents index"))
-        (setq nov-documents-index index)
-        (nov-render-document)
-        (goto-char point))
+        (nov--find-file file index point))
     (error "Invalid nov.el link")))
 
 (defun nov-org-link-store ()

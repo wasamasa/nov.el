@@ -648,17 +648,17 @@ the HTML is rendered with `nov-render-html-function'."
 
 (defun nov-visit-relative-file (filename target)
   "Visit the document as specified by FILENAME and TARGET."
-  (let ((index nov-documents-index)
-        (shr-target-id target))
-    (when (not (zerop (length filename)))
-      (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
-             (directory (file-name-directory current-path))
-             (path (file-truename (nov-make-path directory filename)))
-             (index (nov-find-document
-                     (lambda (doc) (equal path (file-truename (cdr doc)))))))
-        (when (not index)
-          (error "Couldn't locate document"))
-        (nov-goto-document index))))
+  (when (not (zerop (length filename)))
+    (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
+           (directory (file-name-directory current-path))
+           (path (file-truename (nov-make-path directory filename)))
+           (index (nov-find-document
+                   (lambda (doc) (equal path (file-truename (cdr doc)))))))
+      (when (not index)
+        (error "Couldn't locate document"))
+      (setq nov-documents-index index)))
+  (let ((shr-target-id target))
+    (nov-goto-document nov-documents-index))
   (when target
     (let ((pos (next-single-property-change (point-min) 'shr-target-id)))
       (when (not pos)

@@ -648,21 +648,23 @@ the HTML is rendered with `nov-render-html-function'."
 
 (defun nov-visit-relative-file (filename target)
   "Visit the document as specified by FILENAME and TARGET."
-  (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
-         (directory (file-name-directory current-path))
-         (path (file-truename (nov-make-path directory filename)))
-         (index (nov-find-document
-                 (lambda (doc) (equal path (file-truename (cdr doc)))))))
-    (when (not index)
-      (error "Couldn't locate document"))
-    (let ((shr-target-id target))
-      (nov-goto-document index))
-    (when target
-      (let ((pos (next-single-property-change (point-min) 'shr-target-id)))
-        (when (not pos)
-          (error "Couldn't locate target"))
-        (goto-char pos)
-        (recenter (1- (max 1 scroll-margin)))))))
+  (let ((index nov-documents-index)
+        (shr-target-id target))
+    (when (not (zerop (length filename)))
+      (let* ((current-path (cdr (aref nov-documents nov-documents-index)))
+             (directory (file-name-directory current-path))
+             (path (file-truename (nov-make-path directory filename)))
+             (index (nov-find-document
+                     (lambda (doc) (equal path (file-truename (cdr doc)))))))
+        (when (not index)
+          (error "Couldn't locate document"))
+        (nov-goto-document index))))
+  (when target
+    (let ((pos (next-single-property-change (point-min) 'shr-target-id)))
+      (when (not pos)
+        (error "Couldn't locate target"))
+      (goto-char pos)
+      (recenter (1- (max 1 scroll-margin))))))
 
 ;; adapted from `shr-browse-url'
 (defun nov-browse-url (&optional mouse-event)

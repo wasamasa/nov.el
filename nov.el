@@ -448,17 +448,15 @@ This function honors `shr-max-image-proportion' if possible."
    ;; TODO: add native resizing support once it's official
    ((fboundp 'imagemagick-types)
     ;; adapted from `shr-rescale-image'
-    (let ((edges (window-inside-pixel-edges
-                  (get-buffer-window (current-buffer)))))
+    (-let [(x1 y1 x2 y2) (window-inside-pixel-edges
+                          (get-buffer-window (current-buffer)))]
       (insert-image
        (create-image path 'imagemagick nil
                      :ascent 100
                      :max-width (truncate (* shr-max-image-proportion
-                                             (- (nth 2 edges)
-                                                (nth 0 edges))))
+                                             (- x2 x1)))
                      :max-height (truncate (* shr-max-image-proportion
-                                              (- (nth 3 edges)
-                                                 (nth 1 edges))))))))
+                                              (- y2 y1)))))))
    (t
     ;; `create-image' errors out for unsupported image types
     (let ((image (ignore-errors (create-image path nil nil :ascent 100))))
@@ -526,15 +524,13 @@ If the document path refers to an image (as determined by
 `image-type-file-name-regexps'), an image is inserted, otherwise
 the HTML is rendered with `nov-render-html-function'."
   (interactive)
-  (let* ((document (aref nov-documents nov-documents-index))
-         (id (car document))
-         (path (cdr document))
-         ;; HACK: this should be looked up in the manifest
-         (imagep (--find (string-match-p (car it) path)
-                         image-type-file-name-regexps))
-         ;; NOTE: allows resolving image references correctly
-         (default-directory (file-name-directory path))
-         buffer-read-only)
+  (-let* (((id . path) (aref nov-documents nov-documents-index))
+          ;; HACK: this should be looked up in the manifest
+          (imagep (--find (string-match-p (car it) path)
+                          image-type-file-name-regexps))
+          ;; NOTE: allows resolving image references correctly
+          (default-directory (file-name-directory path))
+          (buffer-read-only nil))
     (erase-buffer)
 
     (cond
@@ -724,11 +720,10 @@ Saving is only done if `nov-save-place-file' is set."
   (interactive)
   (or nov-history
       (user-error "This is the first document you looked at"))
-  (let ((history-forward
-         (cons (list nov-documents-index (point))
-               nov-history-forward))
-        (index (car (car nov-history)))
-        (opoint (cadr (car nov-history))))
+  (-let ((history-forward
+          (cons (list nov-documents-index (point))
+                nov-history-forward))
+         ((index opoint) (car nov-history)))
     (setq nov-history (cdr nov-history))
     (nov-goto-document index)
     (setq nov-history (cdr nov-history))
@@ -740,9 +735,8 @@ Saving is only done if `nov-save-place-file' is set."
   (interactive)
   (or nov-history-forward
       (user-error "This is the last document you looked at"))
-  (let ((history-forward (cdr nov-history-forward))
-        (index (car (car nov-history-forward)))
-        (opoint (cadr (car nov-history-forward))))
+  (-let ((history-forward (cdr nov-history-forward))
+         ((index opoint) (car nov-history-forward)))
     (nov-goto-document index)
     (setq nov-history-forward history-forward)
     (goto-char opoint)))

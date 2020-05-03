@@ -48,9 +48,11 @@
 (require 'esxml-query)
 (require 'shr)
 (require 'url-parse)
-(require 'recentf)
+
 (require 'bookmark)
+(require 'imenu)
 (require 'org)
+(require 'recentf)
 
 (when (not (fboundp 'libxml-parse-xml-region))
   (message "Your Emacs wasn't compiled with libxml support"))
@@ -797,6 +799,7 @@ Saving is only done if `nov-save-place-file' is set."
 ;;; recentf interop
 
 (defun nov-add-to-recentf ()
+  "Add real path to recentf list if possible."
   (when nov-file-name
     (recentf-add-file nov-file-name)))
 
@@ -816,7 +819,7 @@ Saving is only done if `nov-save-place-file' is set."
   (nov-render-document)
   (goto-char point))
 
-;; Bookmark Integration
+;; Bookmark interop
 (defun nov-bookmark-make-record  ()
   "Create a bookmark epub record."
   (cons (buffer-name)
@@ -835,9 +838,10 @@ See also `nov-bookmark-make-record'."
     (nov--find-file file index position)))
 
 
-;;; org interop
+;;; Org interop
 
 (defun nov-org-link-follow (path)
+  "Follow nov: link designated by PATH."
   (if (string-match "^\\(.*\\)::\\([0-9]+\\):\\([0-9]+\\)$" path)
       (let ((file (match-string 1 path))
             (index (string-to-number (match-string 2 path)))
@@ -846,6 +850,7 @@ See also `nov-bookmark-make-record'."
     (error "Invalid nov.el link")))
 
 (defun nov-org-link-store ()
+  "Store current EPUB location as nov: link."
   (when (and (eq major-mode 'nov-mode) nov-file-name)
     (when (not (integerp nov-documents-index))
       (setq nov-documents-index 0))

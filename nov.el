@@ -347,14 +347,14 @@ Each alist item consists of the identifier and full path."
         (nov--content-epub2-files content manifest files)
       (nov--content-epub3-files content manifest files))))
 
-(defun nov--walk-ncx-node (node depth)
+(defun nov--walk-ncx-node (node)
   (let ((tag (esxml-node-tag node))
         (children (--filter (eq (esxml-node-tag it) 'navPoint)
                             (esxml-node-children node))))
     (cond
      ((eq tag 'navMap)
       (insert "<ol>\n")
-      (mapc (lambda (node) (nov--walk-ncx-node node (1+ depth))) children)
+      (mapc (lambda (node) (nov--walk-ncx-node node)) children)
       (insert "</ol>\n"))
      ((eq tag 'navPoint)
       (let* ((label-node (esxml-query "navLabel>text" node))
@@ -367,7 +367,7 @@ Each alist item consists of the identifier and full path."
           (if children
               (progn
                 (insert (format "<li>\n%s\n<ol>\n" link))
-                (mapc (lambda (node) (nov--walk-ncx-node node (1+ depth)))
+                (mapc (lambda (node) (nov--walk-ncx-node node))
                       children)
                 (insert (format "</ol>\n</li>\n")))
             (insert (format "<li>\n%s\n</li>\n" link)))))))))
@@ -376,7 +376,7 @@ Each alist item consists of the identifier and full path."
   "Convert NCX document at PATH to HTML."
   (let ((root (esxml-query "navMap" (nov-slurp path t))))
     (with-temp-buffer
-      (nov--walk-ncx-node root 0)
+      (nov--walk-ncx-node root)
       (buffer-string))))
 
 

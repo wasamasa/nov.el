@@ -865,24 +865,15 @@ See also `nov-bookmark-make-record'."
   "Visit imenu item using FILENAME and TARGET."
   (nov-visit-relative-file filename target))
 
-(defun nov--imenu-create-epub2-index (toc-path)
-  (let ((toc (with-temp-buffer
-               (insert-file-contents toc-path)
-               (libxml-parse-xml-region (point-min) (point-max)))))
-    (mapcar
-     (lambda (node)
-       (-let* ((label-node (esxml-query "navLabel>text" node))
-               (content-node (esxml-query "content" node))
-               (href (nov-urldecode (esxml-node-attribute 'src content-node)))
-               (label (car (esxml-node-children label-node)))
-               ((filename target) (nov-url-filename-and-target href)))
-         (list label filename 'nov-imenu-goto-function target)))
-     (esxml-query-all "navPoint" toc))))
-
-(defun nov--imenu-create-epub3-index (toc-path)
-  (let ((toc (with-temp-buffer
-               (insert-file-contents toc-path)
-               (libxml-parse-html-region (point-min) (point-max)))))
+(defun nov-imenu-create-index ()
+  "Generate Imenu index."
+  (let* ((toc-path (cdr (aref nov-documents 0)))
+         (ncxp (version< nov-epub-version "3.0"))
+         (toc (with-temp-buffer
+                (if ncxp
+                    (insert (nov-ncx-to-html toc-path))
+                  (insert-file-contents toc-path))
+                (libxml-parse-html-region (point-min) (point-max)))))
     (mapcar
      (lambda (node)
        (-let* ((href (esxml-node-attribute 'href node))
@@ -890,13 +881,6 @@ See also `nov-bookmark-make-record'."
                ((filename target) (nov-url-filename-and-target href)))
          (list label filename 'nov-imenu-goto-function target)))
      (esxml-query-all "a" toc))))
-
-(defun nov-imenu-create-index ()
-  "Generate Imenu index."
-  (let ((toc-path (cdr (aref nov-documents 0))))
-    (if (version< nov-epub-version "3.0")
-        (nov--imenu-create-epub2-index toc-path)
-      (nov--imenu-create-epub3-index toc-path))))
 
 (defun nov-imenu-setup ()
   (setq imenu-create-index-function 'nov-imenu-create-index))

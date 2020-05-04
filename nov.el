@@ -867,6 +867,7 @@ See also `nov-bookmark-make-record'."
 
 (defun nov-imenu-create-index ()
   "Generate Imenu index."
+  (require 'esxml)
   (let* ((toc-path (cdr (aref nov-documents 0)))
          (ncxp (version< nov-epub-version "3.0"))
          (toc (with-temp-buffer
@@ -877,7 +878,8 @@ See also `nov-bookmark-make-record'."
     (mapcar
      (lambda (node)
        (-let* ((href (esxml-node-attribute 'href node))
-               (label (car (esxml-node-children node)))
+               (label (mapconcat 'string-trim-whitespace
+                                 (esxml-find-descendants #'stringp node) " "))
                ((filename target) (nov-url-filename-and-target href)))
          (list label filename 'nov-imenu-goto-function target)))
      (esxml-query-all "a" toc))))
